@@ -99,6 +99,9 @@ import qualified System.FilePath
 import qualified Text.Dot
 import qualified Text.Pretty.Simple
 
+import OpenTelemetry.Implicit
+import OpenTelemetry.LightStep
+
 -- | Top-level program options
 data Options = Options
     { mode    :: Mode
@@ -488,7 +491,7 @@ noHeaders i =
 
 -- | Run the command specified by the `Options` type
 command :: Options -> IO ()
-command (Options {..}) = do
+command (Options {..}) = withSpan "command" $ do
     let characterSet = case ascii of
             True  -> ASCII
             False -> Unicode
@@ -561,13 +564,13 @@ command (Options {..}) = do
             Data.Text.IO.hPutStrLn h ""
 
     let render :: Pretty a => Handle -> Expr Src a -> IO ()
-        render h expression = do
+        render h expression = withSpan "render" $ do
             let doc = Dhall.Pretty.prettyCharacterSet characterSet expression
 
             renderDoc h doc
 
     let writeDocToFile :: FilePath -> Doc ann -> IO ()
-        writeDocToFile file doc = do
+        writeDocToFile file doc = withSpan "writeDocToFile" $ do
             let stream = Dhall.Pretty.layout (doc <> "\n")
 
             AtomicWrite.LazyText.atomicWriteFile file (Pretty.Text.renderLazy stream)
@@ -879,7 +882,7 @@ command (Options {..}) = do
 
 -- | Entry point for the @dhall@ executable
 main :: IO ()
-main = do
-    options <- Options.Applicative.execParser parserInfoOptions
+main = withEnvConfigLightStepOpenTelemetry $ withSpan "main" $ do
+    options <- withSpan "parse_options" $ Options.Applicative.execParser parserInfoOptions
 
     Dhall.Main.command options

@@ -28,6 +28,8 @@ extra-deps:
   - megaparsec-8.0.0
   - cborg-json-0.2.2.0
   - parser-combinators-1.2.1
+  - opentelemetry-0.1.0
+  - opentelemetry-lightstep-0.1.0
 nix:
   packages:
     - ncurses

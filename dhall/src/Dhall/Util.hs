@@ -30,6 +30,7 @@ import Dhall.Parser (ParseError, Header(..))
 import Dhall.Pretty (Ann)
 import Dhall.Syntax (Expr, Import)
 import Dhall.Src (Src)
+import OpenTelemetry.Implicit (withSpan)
 
 import qualified Control.Exception
 import qualified Data.Text
@@ -172,12 +173,13 @@ instance Show CheckFailed where
 
 -- | Convenient utility for retrieving an expression
 getExpression :: Censor -> Input -> IO (Expr Src Import)
-getExpression censor = get Dhall.Parser.exprFromText censor . Input_
+getExpression censor input = withSpan "Util.getExpression" $
+  get Dhall.Parser.exprFromText censor (Input_ input)
 
 -- | Convenient utility for retrieving an expression along with its header
 getExpressionAndHeader :: Censor -> Input -> IO (Header, Expr Src Import)
-getExpressionAndHeader censor =
-    get Dhall.Parser.exprAndHeaderFromText censor . Input_
+getExpressionAndHeader censor input = withSpan "Util.getExpressionAndHeader" $
+    get Dhall.Parser.exprAndHeaderFromText censor (Input_ input)
 
 -- | Convenient utility for retrieving an expression along with its header from
 -- | text already read from STDIN (so it's not re-read)
